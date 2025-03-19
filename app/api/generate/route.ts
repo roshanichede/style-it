@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     });*/
 
     // Generate image based on the suggestion
-    const imageResponse = await client.images.generate({
+    const params: any = {
       model: "black-forest-labs/flux-dev",
       response_format: "b64_json",
       extra_body: {
@@ -75,7 +75,8 @@ export async function POST(req: Request) {
         seed: -1
       },
       prompt: myprompt
-    });
+    };
+    const imageResponse = await client.images.generate(params);
 
     //console.log('Image Generated:', imageResponse);
 
