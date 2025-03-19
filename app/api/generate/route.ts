@@ -18,8 +18,9 @@ export async function POST(req: Request) {
     // Generate outfit suggestion text
 
     const suggestionResponse = await client.chat.completions.create({
-      model: "meta-llama/Llama-3.3-70B-Instruct",
-      temperature: 0,
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      temperature: 0.6,
+      top_p: 0.9,
       messages: [
         {
           role: "system",
