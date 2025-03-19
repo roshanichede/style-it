@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Wand2, Loader2, ShoppingBag, Calendar, Camera, Share2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Mic, MicOff } from "lucide-react";
+import type { SpeechRecognition, SpeechRecognitionConstructor, SpeechRecognitionEvent } from "@/app/type";
 
 export default function Home() {
   const [occasion, setOccasion] = useState("");
@@ -23,6 +25,13 @@ export default function Home() {
   const [isVisible, setIsVisible] = useState(true);
   const [colorScheme, setColorScheme] = useState("purple");
 
+  //voice input
+  const [isListening, setIsListening] = useState(false);
+  const [voiceText, setVoiceText] = useState("");
+  const [voiceError, setVoiceError] = useState("");
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isListeningRef = useRef<boolean>(false);
+
   // Fashion-related texts for animation
   const fashionTexts = [
     "Express yourself",
@@ -31,6 +40,73 @@ export default function Home() {
     "Dress with confidence",
     "Fashion forward"
   ];
+  
+  //useffect for voice command
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      const SpeechRecognitionAPI = (window.SpeechRecognition || window.webkitSpeechRecognition) as unknown as SpeechRecognitionConstructor;
+      
+      recognitionRef.current = new SpeechRecognitionAPI();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+    
+      recognitionRef.current.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join('');
+        
+        setVoiceText(transcript);
+        
+        // If not interim result, add to wardrobe items
+        if (event.results[0].isFinal) {
+          setWardrobeItems(prev => {
+            const newText = prev ? `${prev}, ${transcript}` : transcript;
+            return newText;
+          });
+        }
+      };
+    
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        setVoiceError(event.error);
+        setIsListening(false);
+        isListeningRef.current = false;
+      };
+    
+      recognitionRef.current.onend = () => {
+        // Use the ref for reliable value checking
+        if (isListeningRef.current) {
+          try {
+            recognitionRef.current?.start();
+          } catch (error) {
+            console.error("Failed to restart speech recognition:", error);
+            setIsListening(false);
+            isListeningRef.current = false;
+          }
+        }
+      };
+    } else {
+      setVoiceError("Speech recognition not supported in this browser");
+    }
+  
+    // Cleanup function
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (error) {
+          console.error("Error stopping speech recognition:", error);
+        }
+      }
+    };
+  }, []);
+  
+  // Keep the ref in sync with the state
+  useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
   
   // Text animation effect
   useEffect(() => {
@@ -63,6 +139,35 @@ export default function Home() {
     return () => clearInterval(colorInterval);
   }, []);
   
+  // Toggle voice recognition
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      setVoiceError("Speech recognition not supported or not initialized");
+      return;
+    }
+    
+    if (isListening) {
+      try {
+        recognitionRef.current.stop();
+        setIsListening(false);
+        isListeningRef.current = false;
+      } catch (error) {
+        console.error("Error stopping speech recognition:", error);
+      }
+    } else {
+      try {
+        // Start a new session
+        setVoiceText("");
+        recognitionRef.current.start();
+        setIsListening(true);
+        isListeningRef.current = true;
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        setVoiceError("Failed to start speech recognition. Please try again.");
+      }
+    }
+  };
+
   const getColorScheme = () => {
     switch (colorScheme) {
       case "purple":
@@ -359,13 +464,48 @@ case "lavender-purple":
                     <ShoppingBag className="h-4 w-4 mr-2" />
                     Your Wardrobe Items
                   </label>
-                  <Textarea
-                    placeholder="List your clothing items (e.g., red dress, denim jacket, white sneakers)"
-                    value={wardrobeItems}
-                    onChange={(e) => setWardrobeItems(e.target.value)}
-                    required
-                    className={`min-h-[120px] hover-lift ${colors.border} ${colors.borderDark} focus:ring-${colors.primary}-300 focus:border-${colors.primary}-300 transition-colors duration-3000`}
-                  />
+                  {/* Voice input area with button */}
+                  <div className="relative">
+                    <Textarea
+                      placeholder="List your clothing items (e.g., red dress, denim jacket, white sneakers) or use voice input"
+                      value={wardrobeItems}
+                      onChange={(e) => setWardrobeItems(e.target.value)} required
+                      className={`min-h-[120px] hover-lift ${colors.border} ${colors.borderDark} focus:ring-${colors.primary}-300 focus:border-${colors.primary}-300 transition-colors duration-3000 pr-12`}
+                    />
+  
+                    {/* Voice input button */}
+                    <Button
+                      type="button"
+                      onClick={toggleListening}
+                      className={`absolute right-2 bottom-2 p-2 rounded-full ${isListening ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'} text-white z-10`}
+                      size="sm"
+                    >
+                      {isListening ? (
+                        <MicOff className="h-4 w-4" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Voice recognition status with improved UI */}
+                  {isListening && (
+                    <div className={`flex items-center text-sm ${colors.text} mt-2 p-2 rounded-md bg-red-50 dark:bg-red-900/20`}>
+                      <div className="flex space-x-1 mr-2">
+                        <div className={`w-2 h-2 rounded-full bg-red-500 animate-pulse`}></div>
+                        <div className={`w-2 h-2 rounded-full bg-red-500 animate-pulse animation-delay-200`}></div>
+                        <div className={`w-2 h-2 rounded-full bg-red-500 animate-pulse animation-delay-400`}></div>
+                      </div>
+                      <span>Listening... "{voiceText}"</span>
+                    </div>
+                  )}
+
+
+                  {voiceError && !isListening && (
+                    <p className="text-red-500 text-sm mt-1 p-2 bg-red-50 dark:bg-red-900/10 rounded-md">
+                      Error: {voiceError}
+                    </p>
+                  )}
                 </div>
 
                 <Button
@@ -495,12 +635,10 @@ case "lavender-purple":
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </div>         
           )}
         </div>
       </div>
-      
-      {/* Add these custom animations to your global CSS */}
          </main>
   );
 }
