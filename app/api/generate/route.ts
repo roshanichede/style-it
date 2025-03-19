@@ -18,23 +18,35 @@ export async function POST(req: Request) {
     // Generate outfit suggestion text
 
     const suggestionResponse = await client.chat.completions.create({
-      model: "aaditya/Llama3-OpenBioLLM-8B",
+      model: "meta-llama/Llama-3.3-70B-Instruct",
       temperature: 0,
       messages: [
         {
           role: "system",
-          content: "Given an occasion and a list of wardrobe items, suggest multiple stylish outfit ideas. Consider color coordination, layering, accessories, and footwear. Keep suggestions practical and creative while ensuring they match the occasion."
+          content: [
+            {
+                type: "text",
+                text: "Given an occasion and a list of wardrobe items, suggest multiple stylish outfit ideas. Consider color coordination, layering, accessories, and footwear. Keep suggestions practical and creative while ensuring they match the occasion."
+            }
+        ]
+          //content: "Given an occasion and a list of wardrobe items, suggest multiple stylish outfit ideas. Consider color coordination, layering, accessories, and footwear. Keep suggestions practical and creative while ensuring they match the occasion."
         },
         {
           role: "user",
-          content: myprompt  // Use the prompt directly instead of template literals
+          content: [
+                {
+                    type: "text",
+                    text: myprompt
+                }
+            ]
+          //content: myprompt  // Use the prompt directly instead of template literals
         }
       ]
     });
 
     const suggestion = suggestionResponse.choices[0].message.content;
     
-    console.log('Suggestion:', suggestionResponse);
+    console.log('Suggestion:', suggestion);
     
     /*const imageResponse = await client.images.generate({
         model: "black-forest-labs/flux-dev",

@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function Home() {
   const [occasion, setOccasion] = useState("");
@@ -415,22 +417,12 @@ case "lavender-purple":
                     
                     <CardContent>
                       <div className="prose dark:prose-invert max-w-none">
-                        <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200">
-                          {result.suggestion}
-                        </p>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={{p: ({node, ...props}) => <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200" {...props} />}}>
+                       {result.suggestion}
+                      </ReactMarkdown>
                       </div>
                     </CardContent>
                     
-                    <CardFooter className="pt-4 flex justify-end gap-2">
-                      <Button variant="outline" size="sm" className={`button-hover ${colors.border} ${colors.text} ${colors.hover} ${colors.borderDark} dark:text-${colors.primary}-300 ${colors.hoverDark} transition-colors duration-3000`}>
-                        <Share2 className="h-4 w-4 mr-2" /> 
-                        Share
-                      </Button>
-                      <Button size="sm" className={`button-hover bg-gradient-to-r ${colors.gradient} hover:brightness-110 text-white transition-colors duration-3000`}>
-                        <Camera className="h-4 w-4 mr-2" />
-                        Save Outfit
-                      </Button>
-                    </CardFooter>
                   </Card>
                 </TabsContent>
                 
@@ -460,16 +452,6 @@ case "lavender-purple":
                       </div>
                     </CardContent>
                     
-                    <CardFooter className="pt-4 flex justify-end gap-2">
-                      <Button variant="outline" size="sm" className={`button-hover ${colors.border} ${colors.text} ${colors.hover} ${colors.borderDark} dark:text-${colors.primary}-300 ${colors.hoverDark} transition-colors duration-3000`}>
-                        <Share2 className="h-4 w-4 mr-2" /> 
-                        Share
-                      </Button>
-                      <Button size="sm" className={`button-hover bg-gradient-to-r ${colors.gradient} hover:brightness-110 text-white transition-colors duration-3000`}>
-                        <Camera className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
-                    </CardFooter>
                   </Card>
                 </TabsContent>
               </Tabs>
