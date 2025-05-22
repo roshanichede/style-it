@@ -1,6 +1,8 @@
 # AI Fashion Stylist
 An intelligent fashion assistant that helps users create stylish outfits from their wardrobe items using AI. The application provides personalized outfit suggestions and generates visual representations of the recommended combinations.
 
+https://style-it.vercel.app/
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
 ## Getting Started
